@@ -7,7 +7,9 @@ import com.devwue.member.exception.NotAcceptableException;
 import com.devwue.member.exception.NotFoundException;
 import com.devwue.member.model.entity.Member;
 import com.devwue.member.model.entity.PhoneAuthentication;
+import com.devwue.member.model.enums.FeatureType;
 import com.devwue.member.model.enums.IdentifierType;
+import com.devwue.member.model.enums.MessageAuthStatus;
 import com.devwue.member.model.response.*;
 import com.devwue.member.repository.MemberRepository;
 import com.devwue.member.repository.PhoneAuthenticationRepository;
@@ -43,6 +45,12 @@ public class MemberService {
 
     @Transactional
     public MemberDto signUp(SignUpRequest request) {
+        String phoneNumber = StringFilter.onlyNumber(request.getPhoneNumber());
+
+        LocalDateTime before10Minute = LocalDateTime.now().minusMinutes(10);
+        phoneAuthenticationRepository.findTopByFeatureAndPhoneNumberAndStatusAndCreatedAtAfterOrderByIdDesc(FeatureType.SIGN_UP.name(), phoneNumber, 2, before10Minute)
+                .orElseThrow(() -> new NotFoundException("전화번호 인증을 먼저 받아야 합니다."));
+
         final Optional<Member> emailMember = memberRepository.findByEmail(request.getEmail());
         if (emailMember.isPresent()) {
             throw new DuplicationException("이미 email 사용자가 있습니다.");
@@ -52,7 +60,6 @@ public class MemberService {
         if (nickMember.isPresent()) {
             throw new DuplicationException("동일한 닉네임을 사용하는 사용자가 있습니다.");
         }
-        String phoneNumber = StringFilter.onlyNumber(request.getPhoneNumber());
 
         final Optional<Member> phoneMember = memberRepository.findByPhoneNumber(phoneNumber);
         if (phoneMember.isPresent()) {
@@ -86,19 +93,17 @@ public class MemberService {
                 .build();
     }
 
-    public void verifyPhoneNumber(PhoneAuthRequest request) {
-        Member member = memberRepository.findByEmail(request.getEmail()).orElse(null);
-        if (member == null) {
-            throw new NotFoundException("계정 정보 조회에 실패 했습니다.");
-        }
-        String phoneNumber = StringFilter.onlyNumber(request.getPhoneNumber());
-        if (!member.getPhoneNumber().equals(phoneNumber)) {
-            throw new NotAcceptableException("계정 정보가 일치하지 않습니다.");
-        }
-        verifyPhoneToken(member.getEmail(), member.getPhoneNumber(), request.getPhoneToken());
+    public void verifyPhoneToken(PhoneAuthRequest request) {
+        final FeatureType featureType = FeatureType.valueOf(request.getFeature());
+        final String phoneNumber = StringFilter.onlyNumber(request.getPhoneNumber());
 
-        member.setPhoneValidate(true);
-        memberRepository.save(member);
+        PhoneAuthentication phoneAuthentication = existsPhoneAuthenticatedFor10Minute(featureType, phoneNumber, MessageAuthStatus.SEND)
+                .orElseThrow(() -> new NotFoundException("인증 번호 발송이 확인되지 않습니다."));
+
+        if (!phoneAuthentication.getPhoneToken().equals(request.getPhoneToken())) {
+            throw new NotAcceptableException("인증 번호가 일치하지 않습니다.");
+        }
+        phoneAuthentication.setStatus(2);
     }
 
     public MemberFullDto info(String header) {
@@ -133,25 +138,19 @@ public class MemberService {
 
     @Transactional
     public Boolean sendPhoneToken(PhoneTokenRequest request) {
-        String email = request.getEmail();
+        FeatureType featureType = FeatureType.valueOf(request.getFeature());
         String phoneNumber = StringFilter.onlyNumber(request.getPhoneNumber());
-        Member member = memberRepository
-                .findByEmailAndPhoneNumber(email, phoneNumber).orElse(null);
-        if (member == null) {
-            return false;
-        }
 
-        Integer tokenStatus = 0;
         LocalDateTime before10Minute = LocalDateTime.now().minusMinutes(10);
         List<PhoneAuthentication> phoneAuthenticationList = phoneAuthenticationRepository
-                .findAllByEmailAndPhoneNumberAndStatusAfterAndCreatedAtAfterOrderByIdDesc(email, phoneNumber, tokenStatus, before10Minute);
+                .findAllByFeatureAndPhoneNumberAndStatusAfterAndCreatedAtAfterOrderByIdDesc(featureType.name(), phoneNumber, MessageAuthStatus.NEW.getValue(), before10Minute);
 
         if (phoneAuthenticationList.size() > 3) { // 10분이내 4회 까지만 가능
             return false;
         }
 
         PhoneAuthentication authentication = new PhoneAuthentication()
-                .setEmail(email)
+                .setFeature(featureType.name())
                 .setPhoneNumber(phoneNumber)
                 .setPhoneToken(StringFilter.createNumberToken(6))
                 .setStatus(0);
@@ -159,29 +158,23 @@ public class MemberService {
         return sendMessageAndSaveResult(authentication);
     }
 
-    public void verifyPhoneToken(String email, String phoneNumber, String phoneToken) {
-        Integer tokenStatus = 1;
-
-        PhoneAuthentication phoneAuthentication = phoneAuthenticationRepository
-                .findTopByEmailAndPhoneNumberAndStatusOrderByIdDesc(email, phoneNumber, tokenStatus)
-                .orElse(null);
-        if (phoneAuthentication == null) {
-            throw new NotFoundException("인증 번호 발송이 확인되지 않습니다.");
-        }
-        if (!phoneAuthentication.getPhoneToken().equals(phoneToken)) {
-            throw new NotAcceptableException("인증 번호가 일치하지 않습니다.");
-        }
-        phoneAuthentication.setStatus(2);
-    }
-
     public MemberDto verifyPhoneTokenWithChangePassword(ChangePasswordRequest request) {
         Member member = memberRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new NotFoundException("사용자가 없습니다."));
 
-        verifyPhoneToken(request.getEmail(), member.getPhoneNumber(), request.getPhoneToken());
+        existsPhoneAuthenticatedFor10Minute(FeatureType.RESET_PASSWORD, member.getPhoneNumber(), MessageAuthStatus.USED)
+                .orElseThrow(() -> new NotAcceptableException("전화번호 인증을 먼저 받아야 합니다."));
 
         member.setPassword(passwordEncoder.encode(request.getPassword()));
         return memberRepository.save(member).toMemberDto();
+    }
+
+    private Optional<PhoneAuthentication> existsPhoneAuthenticatedFor10Minute(FeatureType type,
+                                                                              String phoneNumber,
+                                                                              MessageAuthStatus authStatus) {
+        LocalDateTime before10Minute = LocalDateTime.now().minusMinutes(10);
+        return phoneAuthenticationRepository.findTopByFeatureAndPhoneNumberAndStatusAndCreatedAtAfterOrderByIdDesc(type.name(),
+                        phoneNumber, authStatus.getValue(), before10Minute);
     }
 
     private Boolean sendMessageAndSaveResult(PhoneAuthentication authentication) {

@@ -50,7 +50,7 @@ public class Member extends BaseEntity {
                 .setNickName(request.getNickName())
                 .setPhoneAgency(request.getPhoneAgency())
                 .setPhoneNumber(StringFilter.onlyNumber(request.getPhoneNumber()))
-                .setPhoneValidate(false)
+                .setPhoneValidate(true)
                 .setSignInAt(null);
     }
 

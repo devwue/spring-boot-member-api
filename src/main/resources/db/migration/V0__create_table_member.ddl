@@ -22,11 +22,11 @@ CREATE TABLE if NOT EXISTS member (
 Drop table if exists phone_authentication;
 CREATE TABLE if not exists phone_authentication (
  id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
- email VARCHAR(50) not null COMMENT '이메일',
+ feature VARCHAR(50) not null COMMENT 'signup, password',
  phone_number VARCHAR(11) not null COMMENT '핸드폰 번호',
- phone_token varchar(6) not null comment '핸드폰 인증토큰',
+ phone_token varchar(6) not null comment '인증 문자',
  status tinyint default 0 comment '0: 미발송, 1: 발송 성공, 2: 인증 완료, -1: 발송 실패, -2:만료',
  created_at datetime not null comment '생성 일자',
  updated_at datetime not null comment '수정 일자',
- key idx_email_phoneNumber(email, phone_number)
+ key idx_email_phoneNumber(feature, phone_number)
 ) engine innodb comment = '핸드폰 인증 번호';

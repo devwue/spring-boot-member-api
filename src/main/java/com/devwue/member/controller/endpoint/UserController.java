@@ -23,6 +23,25 @@ public class UserController {
         this.memberService = memberService;
     }
 
+    @Operation(summary = "전화번호 인증번호 발송", description = "회원 가입 및 비밀번호 변경시 사용 되는 인증번호 발송", tags = "Any")
+    @PostMapping("/phone/token")
+    public ResponseEntity<ApiResponse<?>> sendToken(@Validated @RequestBody PhoneTokenRequest request) {
+        Boolean result = memberService.sendPhoneToken(request);
+        if (result) {
+            return ResponseEntity.status(HttpStatus.CREATED)
+                    .body(ApiResponse.success());
+        } else {
+            return ResponseEntity.ok(ApiResponse.fail());
+        }
+    }
+
+    @Operation(summary = "전화번호 인증번호 확인", description = "회원 가입 및 비밀번호 변경시 사용되는 인증번호 확인", tags = "Any")
+    @PostMapping("/phone/verify")
+    public ResponseEntity<ApiResponse<?>> verifyToken(@Validated @RequestBody PhoneAuthRequest request) {
+        memberService.verifyPhoneToken(request);
+        return ResponseEntity.ok(ApiResponse.success());
+    }
+
     @Operation(summary = "회원 가입", description = "회원 가입시 사용", tags = "Any")
     @PostMapping(value = "/signup")
     public ResponseEntity<ApiResponse<MemberDto>> signUp(@Validated @RequestBody SignUpRequest request) {
@@ -45,18 +64,6 @@ public class UserController {
         } else {
             return ResponseEntity.status(HttpStatus.NO_CONTENT)
                     .body(ApiResponse.success());
-        }
-    }
-
-    @Operation(summary = "가입자 전화번호 인증번호 발송", description = "계정 확인 후 가입자 확인을 위한 전화번호 인증번호 발송", tags = "Any")
-    @PostMapping("/phone/token")
-    public ResponseEntity<ApiResponse<?>> sendToken(@Validated @RequestBody PhoneTokenRequest request) {
-        Boolean result = memberService.sendPhoneToken(request);
-        if (result) {
-            return ResponseEntity.status(HttpStatus.CREATED)
-                    .body(ApiResponse.success());
-        } else {
-            return ResponseEntity.ok(ApiResponse.fail());
         }
     }
 

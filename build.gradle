@@ -43,7 +43,7 @@ tasks.named('test') {
 
 flyway {
     driver = 'org.mariadb.jdbc.Driver'
-    url = 'jdbc:mysql://localhost:3307/member_service?useSSL=false&allowPublickeyRetrieval=true&createDatabaseIfNotExist=true'
+    url = 'jdbc:mysql://localhost:3307/member_service?useSSL=false&allowPublicKeyRetrieval=true&createDatabaseIfNotExist=true'
     user = 'root'
     password = 'dev1234!'
     schemas = ['member_service']

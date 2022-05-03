@@ -16,11 +16,6 @@ public class ChangePasswordRequest {
     @Email(message = "email 형식으로 입력해 주세요.")
     private String email;
 
-    @Schema(description = "인증문자", example = "123456")
-    @NotBlank(message = "검증 번호를 입력해 주세요.")
-    @Pattern(regexp = "^(\\d{6})$", message = "문자로 전달 받은 6자리 숫자를 입력 하세요.")
-    private String phoneToken;
-
     @Schema(description = "변경할 비밀번호", example = "password")
     @Pattern(regexp = "^(?=.*[A-Za-z])(?=.*\\d)(?=.*[~!@#$%^&*()+|=])[A-Za-z\\d~!@#$%^&*()+|=]{8,18}$", message = "비밀번호는 영어와 숫자를 포함한 6~18자리 까지 가능 합니다.")
     private String password;

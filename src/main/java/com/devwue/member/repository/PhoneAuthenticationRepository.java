@@ -10,7 +10,7 @@ import java.util.Optional;
 
 @Repository
 public interface PhoneAuthenticationRepository extends JpaRepository<PhoneAuthentication, Long> {
-    List<PhoneAuthentication> findAllByEmailAndPhoneNumberAndStatusAfterAndCreatedAtAfterOrderByIdDesc(String email, String phoneNumber, Integer status, LocalDateTime after);
-    Optional<PhoneAuthentication> findTopByEmailAndPhoneNumberAndStatusOrderByIdDesc(String email, String phoneNumber, Integer status);
+    List<PhoneAuthentication> findAllByFeatureAndPhoneNumberAndStatusAfterAndCreatedAtAfterOrderByIdDesc(String feature, String phoneNumber, Integer status, LocalDateTime after);
+    Optional<PhoneAuthentication> findTopByFeatureAndPhoneNumberAndStatusAndCreatedAtAfterOrderByIdDesc(String feature, String phoneNumber, Integer status, LocalDateTime after);
 
 }

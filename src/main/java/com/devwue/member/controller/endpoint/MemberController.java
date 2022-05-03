@@ -22,13 +22,6 @@ public class MemberController {
         this.memberService = memberService;
     }
 
-    @Operation(summary = "전화번호 인증", description = "회원 가입후 전화번호 인증시 사용", tags = "회원")
-    @PostMapping("/verify")
-    public ResponseEntity<ApiResponse<?>> verify(@Validated @RequestBody PhoneAuthRequest request) {
-        memberService.verifyPhoneNumber(request);
-        return ResponseEntity.ok(ApiResponse.success());
-    }
-
     @Operation(summary = "마이 페이지", description = "로그인 사용자의 회원 정보", tags = "회원")
     @GetMapping("/page")
     public ResponseEntity<ApiResponse<MemberFullDto>> memberPage(@RequestHeader(value="Authorization") String header) {

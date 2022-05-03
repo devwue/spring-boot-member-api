@@ -12,7 +12,7 @@ import javax.persistence.Entity;
 @Accessors(chain = true)
 @Entity(name = "phone_authentication")
 public class PhoneAuthentication extends BaseEntity {
-    private String email;
+    private String feature;
 
     @Column(name = "phone_number")
     private String phoneNumber;

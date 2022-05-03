@@ -14,6 +14,7 @@ services:
     environment:
       MYSQL_PASSWORD: dev1234!
       MYSQL_ROOT_PASSWORD: dev1234!
+      TZ: Asia/Seoul
 
 volumes:
   mysql_init:

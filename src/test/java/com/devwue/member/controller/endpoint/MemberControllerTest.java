@@ -52,48 +52,6 @@ class MemberControllerTest {
 
     @Test
     @Sql("/member-create.sql")
-    void verify_withToken_exist_user_and_validate() throws Exception {
-        String email = "kildong.hong@devwue.com";
-        String token = createAuthToken(email);
-        String payload = "{}";
-
-        mockMvc.perform(post("/member/verify")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .header("Authorization", "Bearer " + token)
-                        .content(payload)
-                ).andDo(print())
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$").exists())
-                .andExpect(jsonPath("$").isMap())
-                .andExpect(jsonPath("$.*", hasSize(3)))
-                .andExpect(jsonPath("$.data").isNotEmpty());
-    }
-
-    @Test
-    @Sql({"/member-create.sql","/phone-authentication-create.sql"})
-    void verify_withToken_exist_user_success() throws Exception {
-        String email = "kildong.hong@devwue.com";
-        String token = createAuthToken(email);
-        String payload = "{\n" +
-                "  \"email\": \""+email+"\",\n" +
-                "  \"phoneNumber\": \"010-1234-5678\",\n" +
-                "  \"phoneToken\": \"123456\"\n" +
-                "}";
-
-        mockMvc.perform(post("/member/verify")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .header("Authorization", "Bearer " + token)
-                        .content(payload)
-                ).andDo(print())
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$").exists())
-                .andExpect(jsonPath("$").isMap())
-                .andExpect(jsonPath("$.*", hasSize(3)))
-                .andExpect(jsonPath("$.status").value("SUCCESS"));
-    }
-
-    @Test
-    @Sql("/member-create.sql")
     void memberPage() throws Exception {
         String token = createAuthToken("kildong.hong@devwue.com");
 
