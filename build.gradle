@@ -2,6 +2,7 @@ plugins {
     id 'org.springframework.boot' version '2.6.7'
     id 'io.spring.dependency-management' version '1.0.11.RELEASE'
     id 'java'
+    id "org.flywaydb.flyway" version "6.5.7"
 }
 
 group = 'com.devwue'
@@ -38,4 +39,13 @@ dependencies {
 
 tasks.named('test') {
     useJUnitPlatform()
+}
+
+flyway {
+    driver = 'org.mariadb.jdbc.Driver'
+    url = 'jdbc:mysql://localhost:3307/member_service?useSSL=false&allowPublickeyRetrieval=true&createDatabaseIfNotExist=true'
+    user = 'root'
+    password = 'dev1234!'
+    schemas = ['member_service']
+    locations = ['filesystem:/db/migration']
 }
