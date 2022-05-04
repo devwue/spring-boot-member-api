@@ -149,13 +149,8 @@ public class MemberService {
             return false;
         }
 
-        PhoneAuthentication authentication = new PhoneAuthentication()
-                .setFeature(featureType.name())
-                .setPhoneNumber(phoneNumber)
-                .setPhoneToken(StringFilter.createNumberToken(6))
-                .setStatus(0);
-        phoneAuthenticationRepository.save(authentication);
-        return sendMessageAndSaveResult(authentication);
+        phoneService.sendMessage(featureType.name(), StringFilter.createNumberToken(6), phoneNumber);
+        return true;
     }
 
     public MemberDto verifyPhoneTokenWithChangePassword(ChangePasswordRequest request) {
@@ -175,23 +170,5 @@ public class MemberService {
         LocalDateTime before10Minute = LocalDateTime.now().minusMinutes(10);
         return phoneAuthenticationRepository.findTopByFeatureAndPhoneNumberAndStatusAndCreatedAtAfterOrderByIdDesc(type.name(),
                         phoneNumber, authStatus.getValue(), before10Minute);
-    }
-
-    private Boolean sendMessageAndSaveResult(PhoneAuthentication authentication) {
-        int status = -1;
-        boolean result = false;
-        try {
-            result = phoneService.sendMessage(authentication.getPhoneToken(), authentication.getPhoneNumber());
-            if (result) {
-                status = 1;
-            }
-        } catch (Exception e) {
-            // always not run
-            e.printStackTrace();
-        } finally {
-            authentication.setStatus(status);
-            phoneAuthenticationRepository.save(authentication);
-        }
-        return result;
     }
 }

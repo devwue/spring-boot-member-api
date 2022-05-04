@@ -1,8 +1,11 @@
 
 server:
   time-zone: Asia/Seoul
+  shutdown: graceful
 
 spring:
+  lifecycle:
+    timeout-per-shutdown-phase: 20s
   application:
     name: member-api
   mvc:
