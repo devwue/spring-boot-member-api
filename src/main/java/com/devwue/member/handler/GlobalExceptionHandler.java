@@ -6,6 +6,8 @@ import com.devwue.member.exception.NotAcceptableException;
 import com.devwue.member.exception.NotFoundException;
 import com.devwue.member.model.response.ApiResponse;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.MessageSource;
+import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.context.support.DefaultMessageSourceResolvable;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -22,6 +24,21 @@ import java.util.stream.Collectors;
 @Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
+    private final MessageSource messageSource;
+
+    public GlobalExceptionHandler(MessageSource messageSource) {
+        this.messageSource = messageSource;
+    }
+
+    private String getMessage(String code) {
+        try {
+            return messageSource.getMessage(code, null, LocaleContextHolder.getLocale());
+        } catch (Exception e) {
+            log.warn("messageSource exception handler {} - {}", e.getCause(), e.getMessage(), e);
+            return e.getMessage();
+        }
+    }
+
     @Override
     protected ResponseEntity<Object> handleMethodArgumentNotValid(MethodArgumentNotValidException ex, HttpHeaders headers, HttpStatus status, WebRequest request) {
         List<String> validationList = ex.getBindingResult().getFieldErrors().stream()
@@ -34,28 +51,28 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     public ResponseEntity<ApiResponse<?>> handleException(NotFoundException e) {
         log.debug("exception: {}, cause: {} , message: {}", e.getClass(), e.getCause(), e.getMessage());
         return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                .body(ApiResponse.fail(e.getMessage()));
+                .body(ApiResponse.fail(getMessage("notFoundException." + e.getMessage())));
     }
 
     @ExceptionHandler(AuthException.class)
     public ResponseEntity<ApiResponse<?>> handleException(AuthException e) {
         log.debug("exception: {}, cause: {} , message: {}", e.getClass(), e.getCause(), e.getMessage());
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                .body(ApiResponse.fail(e.getMessage()));
+                .body(ApiResponse.fail(getMessage("authException." + e.getMessage())));
     }
 
     @ExceptionHandler(DuplicationException.class)
     public ResponseEntity<ApiResponse<?>> handleException(DuplicationException e) {
         log.debug("exception: {}, cause: {} , message: {}", e.getClass(), e.getCause(), e.getMessage());
         return ResponseEntity.status(HttpStatus.CONFLICT)
-                .body(ApiResponse.fail(e.getMessage()));
+                .body(ApiResponse.fail(getMessage("duplicationException." + e.getMessage())));
     }
 
     @ExceptionHandler(NotAcceptableException.class)
     public ResponseEntity<ApiResponse<?>> handleException(NotAcceptableException e) {
         log.debug("exception: {}, cause: {} , message: {}", e.getClass(), e.getCause(), e.getMessage());
         return ResponseEntity.status(HttpStatus.NOT_ACCEPTABLE)
-                .body(ApiResponse.fail(e.getMessage()));
+                .body(ApiResponse.fail(getMessage("notAcceptableException." + e.getMessage())));
     }
 
     @ExceptionHandler(RuntimeException.class)

@@ -49,21 +49,21 @@ public class MemberService {
 
         LocalDateTime before10Minute = LocalDateTime.now().minusMinutes(10);
         phoneAuthenticationRepository.findTopByFeatureAndPhoneNumberAndStatusAndCreatedAtAfterOrderByIdDesc(FeatureType.SIGN_UP.name(), phoneNumber, 2, before10Minute)
-                .orElseThrow(() -> new NotFoundException("전화번호 인증을 먼저 받아야 합니다."));
+                .orElseThrow(() -> new NotFoundException("needPhoneAuth"));
 
         final Optional<Member> emailMember = memberRepository.findByEmail(request.getEmail());
         if (emailMember.isPresent()) {
-            throw new DuplicationException("이미 email 사용자가 있습니다.");
+            throw new DuplicationException("foundEmail");
         }
 
         final Optional<Member> nickMember = memberRepository.findByNickName(request.getNickName());
         if (nickMember.isPresent()) {
-            throw new DuplicationException("동일한 닉네임을 사용하는 사용자가 있습니다.");
+            throw new DuplicationException("foundNickName");
         }
 
         final Optional<Member> phoneMember = memberRepository.findByPhoneNumber(phoneNumber);
         if (phoneMember.isPresent()) {
-            throw new DuplicationException("이미 인증된 phone 사용자가 있습니다.");
+            throw new DuplicationException("foundPhoneNumber");
         }
 
         final Member member = new Member().toMember(request);
@@ -74,11 +74,11 @@ public class MemberService {
 
     public MemberTokenDto login(SignInRequest request) {
         final Member member = memberRepository.findByEmail(request.getEmail())
-                .orElseThrow(() -> new AuthException("사용자가 없습니다."));
+                .orElseThrow(() -> new AuthException("memberNotFound"));
 
         boolean matched = passwordEncoder.matches(request.getPassword(), member.getPassword());
         if (!matched) {
-            throw new AuthException("비밀번호가 일치하지 않습니다.");
+            throw new AuthException("missMatchPassword");
         }
 
         Authentication authentication = new UsernamePasswordAuthenticationToken(member.getEmail(), null, null);
@@ -98,10 +98,10 @@ public class MemberService {
         final String phoneNumber = StringFilter.onlyNumber(request.getPhoneNumber());
 
         PhoneAuthentication phoneAuthentication = existsPhoneAuthenticatedFor10Minute(featureType, phoneNumber, MessageAuthStatus.SEND)
-                .orElseThrow(() -> new NotFoundException("인증 번호 발송이 확인되지 않습니다."));
+                .orElseThrow(() -> new NotFoundException("phoneAuthNotFound"));
 
         if (!phoneAuthentication.getPhoneToken().equals(request.getPhoneToken())) {
-            throw new NotAcceptableException("인증 번호가 일치하지 않습니다.");
+            throw new NotAcceptableException("misMatchPhoneAuth");
         }
         phoneAuthentication.setStatus(2);
         phoneAuthenticationRepository.save(phoneAuthentication);
@@ -156,10 +156,10 @@ public class MemberService {
 
     public MemberDto verifyPhoneTokenWithChangePassword(ChangePasswordRequest request) {
         Member member = memberRepository.findByEmail(request.getEmail())
-                .orElseThrow(() -> new NotFoundException("사용자가 없습니다."));
+                .orElseThrow(() -> new NotFoundException("memberNotFound"));
 
         existsPhoneAuthenticatedFor10Minute(FeatureType.RESET_PASSWORD, member.getPhoneNumber(), MessageAuthStatus.USED)
-                .orElseThrow(() -> new NotAcceptableException("전화번호 인증을 먼저 받아야 합니다."));
+                .orElseThrow(() -> new NotAcceptableException("needPhoneAuth"));
 
         member.setPassword(passwordEncoder.encode(request.getPassword()));
         return memberRepository.save(member).toMemberDto();

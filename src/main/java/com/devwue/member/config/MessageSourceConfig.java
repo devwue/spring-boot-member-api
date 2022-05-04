@@ -15,6 +15,17 @@ import java.util.Locale;
 
 @Configuration
 public class MessageSourceConfig implements WebMvcConfigurer {
+    @Bean
+    public MessageSource messageSource(@Value("${spring.messages.exception}") String basename,
+                                       @Value("${spring.messages.encoding}") String encoding,
+                                       @Value("${spring.messages.fallback-to-system-locale}") String fallbackSystemLocale) {
+        YamlMessageSource messageSource = new YamlMessageSource();
+        messageSource.setBasename(basename);
+        messageSource.setDefaultEncoding(encoding);
+        messageSource.setFallbackToSystemLocale(fallbackSystemLocale.equals("true"));
+        return messageSource;
+    }
+
     public MessageSource validationMessageSource(String basename, String encoding, String fallbackSystemLocale) {
         YamlMessageSource messageSource = new YamlMessageSource();
         messageSource.setBasename(basename);

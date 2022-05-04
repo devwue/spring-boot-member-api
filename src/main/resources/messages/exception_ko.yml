@@ -1,0 +1,17 @@
+authException:
+  memberNotFound: 사용자가 없습니다.
+  missMatchPassword: 비밀번호가 일치하지 않습니다.
+
+notFoundException:
+  memberNotFound: 사용자가 없습니다.
+  phoneAuthNotFound: 인증 번호 발송이 확인되지 않습니다.
+  needPhoneAuth: 전화번호 인증을 먼저 받아야 합니다.
+
+notAcceptableException:
+  needPhoneAuth: 전화번호 인증을 먼저 받아야 합니다.
+  misMatchPhoneAuth: 인증 번호가 일치하지 않습니다.
+
+duplicationException:
+  foundPhoneNumber: 이미 인증된 phone 사용자가 있습니다.
+  foundNickName: 동일한 닉네임을 사용하는 사용자가 있습니다.
+  foundEmail: 이미 email 사용자가 있습니다.

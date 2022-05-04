@@ -11,6 +11,8 @@
 * 비밀번호 찾기/재설정
   * 로그인 되어 있지 않은 상태로 가능
   * 전화번호 인증 후 비밀번호 재설정
+#### API 문서
+  * [http://localhost:8080/swagger-ui/](http://localhost:8080/swagger-ui/)
 
 ### 구성
 SpringBoot + JPA

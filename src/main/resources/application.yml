@@ -34,6 +34,7 @@ spring:
     pathmatch:
       matching-strategy: ant_path_matcher
   messages:
+    exception: messages/exception
     basename: messages/validation
     encoding: UTF-8
     fallback-to-system-locale: true
