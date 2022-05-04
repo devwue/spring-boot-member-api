@@ -104,6 +104,7 @@ public class MemberService {
             throw new NotAcceptableException("인증 번호가 일치하지 않습니다.");
         }
         phoneAuthentication.setStatus(2);
+        phoneAuthenticationRepository.save(phoneAuthentication);
     }
 
     public MemberFullDto info(String header) {

@@ -2,6 +2,7 @@ package com.devwue.member.config;
 
 import com.devwue.member.model.entity.Member;
 import com.zaxxer.hikari.HikariDataSource;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.jdbc.DataSourceBuilder;
 import org.springframework.context.annotation.Bean;
@@ -23,11 +24,10 @@ import javax.sql.DataSource;
 @EnableTransactionManagement
 public class DataSourceConfig {
     @Bean
+    @ConfigurationProperties("spring.datasource.jpa")
     public LocalContainerEntityManagerFactoryBean entityManagerFactory(DataSource dataSource) {
         HibernateJpaVendorAdapter jpaVendorAdapter = new HibernateJpaVendorAdapter();
         jpaVendorAdapter.setGenerateDdl(false);
-        jpaVendorAdapter.setDatabase(Database.MYSQL);
-        jpaVendorAdapter.setShowSql(true);
 
         LocalContainerEntityManagerFactoryBean entityManagerFactoryBean = new LocalContainerEntityManagerFactoryBean();
         entityManagerFactoryBean.setDataSource(dataSource);
