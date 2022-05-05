@@ -6,6 +6,7 @@ notFoundException:
   memberNotFound: 사용자가 없습니다.
   phoneAuthNotFound: 인증 번호 발송이 확인되지 않습니다.
   needPhoneAuth: 전화번호 인증을 먼저 받아야 합니다.
+  featureType: 회원가입(SIGN_UP), 비밀번호 변경(RESET_PASSWORD)
 
 notAcceptableException:
   needPhoneAuth: 전화번호 인증을 먼저 받아야 합니다.

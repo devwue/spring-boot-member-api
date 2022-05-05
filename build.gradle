@@ -48,5 +48,6 @@ flyway {
     user = 'root'
     password = 'dev1234!'
     schemas = ['member_service']
-    locations = ['filesystem:/db/migration']
+    locations = ["filesystem:${project.projectDir}/src/main/resources/db/migration"]
 }
+test.dependsOn flywayClean,flywayMigrate

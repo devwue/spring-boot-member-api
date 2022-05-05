@@ -1,16 +1,16 @@
-CREATE DATABASE IF NOT EXISTS member_service default CHARACTER SET utf8;
+CREATE DATABASE IF NOT EXISTS member_service default CHARACTER SET UTF8MB4;
 use member_service;
 --
 Drop table if exists member;
 CREATE TABLE if NOT EXISTS member (
   id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   email VARCHAR(50) not null COMMENT '이메일',
-  name VARCHAR(20) not NULL COMMENT '이름',
-  nick_name VARCHAR(20) not NULL COMMENT '닉네임',
+  name VARCHAR(10) not NULL COMMENT '이름',
+  nick_name VARCHAR(10) not NULL COMMENT '닉네임',
   phone_agency VARCHAR(4) not null COMMENT '통신사',
   phone_number VARCHAR(11) not null COMMENT '핸드폰 번호',
   phone_validate boolean not null default false comment '핸드폰 인증',
-  password varchar(256) not null comment '비밀번호 hash',
+  password varchar(100) not null comment '비밀번호 hash',
   sign_in_at datetime null comment '최종 로그인 일자',
   created_at datetime not null comment '생성 일자',
   updated_at datetime not null comment '수정 일자',

@@ -12,7 +12,6 @@ import com.devwue.member.model.enums.IdentifierType;
 import com.devwue.member.model.enums.MessageAuthStatus;
 import com.devwue.member.model.response.*;
 import com.devwue.member.repository.MemberRepository;
-import com.devwue.member.repository.PhoneAuthenticationRepository;
 import com.devwue.member.support.JwtUtil;
 import com.devwue.member.support.StringFilter;
 import lombok.extern.slf4j.Slf4j;
@@ -30,25 +29,21 @@ import java.util.*;
 public class MemberService {
     private final MemberRepository memberRepository;
     private final PasswordEncoder passwordEncoder;
-    private final PhoneAuthenticationRepository phoneAuthenticationRepository;
     private final PhoneService phoneService;
 
     public MemberService(MemberRepository memberRepository,
                          PasswordEncoder passwordEncoder,
-                         PhoneAuthenticationRepository phoneAuthenticationRepository,
                          PhoneService phoneService) {
         this.memberRepository = memberRepository;
         this.passwordEncoder = passwordEncoder;
-        this.phoneAuthenticationRepository = phoneAuthenticationRepository;
         this.phoneService = phoneService;
     }
 
     @Transactional
     public MemberDto signUp(SignUpRequest request) {
-        String phoneNumber = StringFilter.onlyNumber(request.getPhoneNumber());
+        final String phoneNumber = StringFilter.onlyNumber(request.getPhoneNumber());
 
-        LocalDateTime before10Minute = LocalDateTime.now().minusMinutes(10);
-        phoneAuthenticationRepository.findTopByFeatureAndPhoneNumberAndStatusAndCreatedAtAfterOrderByIdDesc(FeatureType.SIGN_UP.name(), phoneNumber, 2, before10Minute)
+        phoneService.getPhoneAuthentication(FeatureType.SIGN_UP, phoneNumber, MessageAuthStatus.USED)
                 .orElseThrow(() -> new NotFoundException("needPhoneAuth"));
 
         final Optional<Member> emailMember = memberRepository.findByEmail(request.getEmail());
@@ -97,14 +92,13 @@ public class MemberService {
         final FeatureType featureType = FeatureType.valueOf(request.getFeature());
         final String phoneNumber = StringFilter.onlyNumber(request.getPhoneNumber());
 
-        PhoneAuthentication phoneAuthentication = existsPhoneAuthenticatedFor10Minute(featureType, phoneNumber, MessageAuthStatus.SEND)
+        PhoneAuthentication phoneAuthentication = phoneService.getPhoneAuthentication(featureType, phoneNumber, MessageAuthStatus.SEND)
                 .orElseThrow(() -> new NotFoundException("phoneAuthNotFound"));
 
         if (!phoneAuthentication.getPhoneToken().equals(request.getPhoneToken())) {
             throw new NotAcceptableException("misMatchPhoneAuth");
         }
-        phoneAuthentication.setStatus(2);
-        phoneAuthenticationRepository.save(phoneAuthentication);
+        phoneService.updateStatus(phoneAuthentication, MessageAuthStatus.USED);
     }
 
     public MemberFullDto info(String header) {
@@ -142,15 +136,13 @@ public class MemberService {
         FeatureType featureType = FeatureType.valueOf(request.getFeature());
         String phoneNumber = StringFilter.onlyNumber(request.getPhoneNumber());
 
-        LocalDateTime before10Minute = LocalDateTime.now().minusMinutes(10);
-        List<PhoneAuthentication> phoneAuthenticationList = phoneAuthenticationRepository
-                .findAllByFeatureAndPhoneNumberAndStatusAfterAndCreatedAtAfterOrderByIdDesc(featureType.name(), phoneNumber, MessageAuthStatus.NEW.getValue(), before10Minute);
+        List<PhoneAuthentication> phoneAuthenticationList = phoneService.getAvailableHistory(featureType, phoneNumber, MessageAuthStatus.NEW);
 
         if (phoneAuthenticationList.size() > 3) { // 10분이내 4회 까지만 가능
             return false;
         }
 
-        phoneService.sendMessage(featureType.name(), StringFilter.createNumberToken(6), phoneNumber);
+        phoneService.sendMessage(featureType, phoneNumber);
         return true;
     }
 
@@ -158,18 +150,10 @@ public class MemberService {
         Member member = memberRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new NotFoundException("memberNotFound"));
 
-        existsPhoneAuthenticatedFor10Minute(FeatureType.RESET_PASSWORD, member.getPhoneNumber(), MessageAuthStatus.USED)
+        phoneService.getPhoneAuthentication(FeatureType.RESET_PASSWORD, member.getPhoneNumber(), MessageAuthStatus.USED)
                 .orElseThrow(() -> new NotAcceptableException("needPhoneAuth"));
 
         member.setPassword(passwordEncoder.encode(request.getPassword()));
         return memberRepository.save(member).toMemberDto();
-    }
-
-    private Optional<PhoneAuthentication> existsPhoneAuthenticatedFor10Minute(FeatureType type,
-                                                                              String phoneNumber,
-                                                                              MessageAuthStatus authStatus) {
-        LocalDateTime before10Minute = LocalDateTime.now().minusMinutes(10);
-        return phoneAuthenticationRepository.findTopByFeatureAndPhoneNumberAndStatusAndCreatedAtAfterOrderByIdDesc(type.name(),
-                        phoneNumber, authStatus.getValue(), before10Minute);
     }
 }
