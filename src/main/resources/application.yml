@@ -8,13 +8,6 @@ spring:
     timeout-per-shutdown-phase: 20s
   application:
     name: member-api
-  datasource:
-    master:
-      jdbc-url: jdbc:mariadb://localhost:3307/member_service?useUnicode=true&characterEncoding=utf8&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=${server.time-zone}
-      driver-class-name: org.mariadb.jdbc.Driver
-      username: root
-      password: dev1234!
-
   flyway:
     locations: classpath:/db/migration
     sql-migration-suffixes: sql

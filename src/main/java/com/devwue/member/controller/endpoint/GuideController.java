@@ -6,16 +6,13 @@ import com.devwue.member.model.response.ApiResponse;
 import com.devwue.member.service.PhoneService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
-import javax.validation.Valid;
 import javax.validation.constraints.Pattern;
-import javax.validation.constraints.Size;
 
 @Tag(name = "가이드", description = "미 구현 기능 가이드")
 @RestController
