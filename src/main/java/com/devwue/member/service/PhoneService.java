@@ -13,7 +13,6 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.CompletableFuture;
 
 @Slf4j
 @Service
@@ -53,7 +52,7 @@ public class PhoneService {
                 .setPhoneNumber(phoneNumber)
                 .setPhoneToken(message)
                 .setStatus(MessageAuthStatus.NEW.getValue());
-        return phoneAuthenticationRepository.save(authentication);
+        return phoneAuthenticationRepository.saveAndFlush(authentication);
     }
 
     private LocalDateTime getDateTimeAfterTimeout() {
@@ -67,23 +66,18 @@ public class PhoneService {
     }
 
     @Async
-    public CompletableFuture<Boolean> sendMessage(FeatureType type, String phoneNumber) {
+    public void sendMessage(FeatureType type, String phoneNumber) {
         PhoneAuthentication authentication = newAuthentication(type, phoneNumber, StringFilter.createNumberToken(6));
+        try {
+            // todo: external service implement...
+            Thread.sleep(5_000);
 
-        return CompletableFuture.supplyAsync(() -> {
-            try {
-                // todo: external service implement...
-                Thread.sleep(5_000);
-
-                log.debug("complete: {} - {}", type, phoneNumber);
-                authentication.setStatus(MessageAuthStatus.SEND.getValue());
-            } catch (InterruptedException e) {
-                authentication.setStatus(MessageAuthStatus.FAIL.getValue());
-                e.printStackTrace();
-                Thread.interrupted();
-            }
-            phoneAuthenticationRepository.save(authentication);
-            return authentication.getStatus() > 0;
-        });
+            log.debug("{} send complete2: {} - {}", Thread.currentThread(), type, phoneNumber);
+            authentication.setStatus(MessageAuthStatus.SEND.getValue());
+        } catch (InterruptedException e) {
+            authentication.setStatus(MessageAuthStatus.FAIL.getValue());
+            Thread.interrupted();
+        }
+        phoneAuthenticationRepository.save(authentication);
     }
 }

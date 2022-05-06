@@ -21,7 +21,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
 import java.util.*;
 
 @Slf4j
@@ -30,13 +29,16 @@ public class MemberService {
     private final MemberRepository memberRepository;
     private final PasswordEncoder passwordEncoder;
     private final PhoneService phoneService;
+    private final PrivacyService privacyService;
 
     public MemberService(MemberRepository memberRepository,
                          PasswordEncoder passwordEncoder,
-                         PhoneService phoneService) {
+                         PhoneService phoneService,
+                         PrivacyService privacyService) {
         this.memberRepository = memberRepository;
         this.passwordEncoder = passwordEncoder;
         this.phoneService = phoneService;
+        this.privacyService = privacyService;
     }
 
     @Transactional
@@ -61,10 +63,13 @@ public class MemberService {
             throw new DuplicationException("foundPhoneNumber");
         }
 
-        final Member member = new Member().toMember(request);
-        member.setPassword(passwordEncoder.encode(request.getPassword()));
-        return memberRepository.save(member)
-                .toMemberDto();
+        final Member member = Member.builder().signUpRequest(request).build();
+        final String encryptedName = Optional.ofNullable(privacyService.encrypt(request.getName()))
+                .orElse(request.getName());
+        member.setName(encryptedName)
+                .setPassword(passwordEncoder.encode(request.getPassword()));
+        log.debug("member detail - {}", member);
+        return toMemberDto(memberRepository.save(member));
     }
 
     public MemberTokenDto login(SignInRequest request) {
@@ -106,11 +111,12 @@ public class MemberService {
         String email = JwtUtil.parseToken(token);
 
         return memberRepository.findByEmail(email)
-                .map(Member::toMemberFullDto).orElse(null);
+                .map(this::toMemberFullDto)
+                .orElse(null);
     }
 
     protected void updateLoginAt(Member member) {
-        member.setSignInAt(LocalDateTime.now());
+        member.setSignInAt();
         memberRepository.save(member);
     }
 
@@ -128,7 +134,7 @@ public class MemberService {
                 member = memberRepository.findByNickName(request.getKeyword());
                 break;
         }
-        return member.map(Member::toMemberSearchDto).orElse(null);
+        return member.map(this::toMemberSearchDto).orElse(null);
     }
 
     @Transactional
@@ -154,6 +160,40 @@ public class MemberService {
                 .orElseThrow(() -> new NotAcceptableException("needPhoneAuth"));
 
         member.setPassword(passwordEncoder.encode(request.getPassword()));
-        return memberRepository.save(member).toMemberDto();
+        return toMemberDto(memberRepository.save(member));
+    }
+
+    private MemberDto toMemberDto(Member member) {
+        return MemberDto.builder()
+                .email(member.getEmail())
+                .name(privacyService.decrypt(member.getName()))
+                .nickName(member.getNickName())
+                .phoneAgency(member.getPhoneAgency())
+                .phoneNumber(member.getPhoneNumber())
+                .phoneValidate(member.getPhoneValidate())
+                .build();
+
+    }
+
+    private MemberFullDto toMemberFullDto(Member member) {
+        return MemberFullDto.builder()
+                .email(member.getEmail())
+                .name(privacyService.decrypt(member.getName()))
+                .nickName(member.getNickName())
+                .phoneAgency(member.getPhoneAgency())
+                .phoneNumber(member.getPhoneNumber())
+                .phoneValidate(member.getPhoneValidate())
+                .signInAt(member.getSignInAt())
+                .createdAt(member.getCreatedAt())
+                .build();
+    }
+
+    private MemberSearchDto toMemberSearchDto(Member member) {
+        return MemberSearchDto.builder()
+                .email(member.getEmail())
+                .name(privacyService.decrypt(member.getName()))
+                .nickName(member.getNickName())
+                .phoneNumber(StringFilter.maskingPhoneNumber(member.getPhoneNumber()))
+                .build();
     }
 }

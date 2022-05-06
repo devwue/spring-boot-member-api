@@ -5,7 +5,7 @@ Drop table if exists member;
 CREATE TABLE if NOT EXISTS member (
   id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   email VARCHAR(50) not null COMMENT '이메일',
-  name VARCHAR(10) not NULL COMMENT '이름',
+  name VARCHAR(60) not NULL COMMENT '이름',
   nick_name VARCHAR(10) not NULL COMMENT '닉네임',
   phone_agency VARCHAR(4) not null COMMENT '통신사',
   phone_number VARCHAR(11) not null COMMENT '핸드폰 번호',

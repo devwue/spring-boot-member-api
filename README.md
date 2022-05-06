@@ -13,13 +13,24 @@
   * 전화번호 인증 후 비밀번호 재설정
 
 ### 구성
-SpringBoot + JPA
+SpringBoot + Spring Data JPA + MariaDB Driver + Spring Security + JWT
+* 빌드: Gradle
+* 언어: Java
+* 기타: yaml-resource-bundle, flywaydb, swagger3
 
 #### API 문서
 * [http://localhost:8080/swagger-ui/](http://localhost:8080/swagger-ui/)
   * active profile이 local만 동작
-* 인증 문자 발송은 실 구현이 안되어 있어 가이드 API로 인증 번호 확인
-* 로그인 성공시 JWT 토큰 발행, 마이 페이지 접근시 인증 헤더에 포함해 전달 되어야 함.
+##### 작업 설명
+* 인증 문자 발송은 실 구현이 안되어 있어 가이드 API로 발송된 인증번호 조회 가능하도록 기능 제공
+* 회원 가입시 이름은 AES 양방향 암호화되어 저장
+* 비밀번호 찾기 / 재설정
+  * 가입자 계정 검색 API로 계정 확인 (검색 유형: 이메일, 닉네임, 전화번호)
+    * 검색 응답값으로 가입자 전화번호는 마스킹 처리
+  * 전화번호 인증시 회원 가입시 기입한 전화번호로 인증을 받아야 비밀번호 재설정 가능
+* 로그인 성공시 JWT 토큰 발행, 내정보 조회 API의 Header 로 토큰 전달
+* 내 정보 조회시 이름은 복호화 처리
+* Bean Validation 및 Custom Exception 오류 문구는 파일 관리 되도록 처리
 
 ### 시작하기
 1. 프로젝트 다운
@@ -33,10 +44,10 @@ project-root]$ ./gradlew flywayMigrate && ./gradlew flywayInfo
 3. Build & Run (커맨드 라인 실행시...)
 ```shell
 project-root]$ ./gradlew clean build 
-project-root]$ java -server -jar build/libs/member-api-0.0.1-SNAPSHOT.jar -Dspring.profiles.active=local 
+project-root]$ java -Dspring.profiles.active=local -server -jar build/libs/member-api-0.0.1-SNAPSHOT.jar 
 ```
 
-### Local 환경 의존성
+#### Local 환경 요구 사항
 1. docker client - 맥 기준
 ```shell
 $ brew install docker

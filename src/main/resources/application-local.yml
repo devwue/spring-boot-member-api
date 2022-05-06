@@ -1,4 +1,9 @@
 
+app:
+  crypto:
+    securityKey: securityVectorKey123
+    iv: testVectorKey456
+
 spring:
   datasource:
     master:
